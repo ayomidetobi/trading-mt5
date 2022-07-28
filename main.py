@@ -96,7 +96,8 @@ def get_new_tab():
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
     # initiating chrome web driver
     web_browser = webdriver.Chrome(
-        options=opts, executable_path=ChromeDriverManager().install()
+        options=opts,
+        service=service,
     )
     return web_browser
 
@@ -153,10 +154,10 @@ if __name__ == "__main__":
     ok_button_xpath = '//button[text()="OK"]'
 
     while True:
-        # account_details = get_all_accounts()
-        account_details = pd.read_csv("test1.csv")
+        account_details = get_all_accounts()
+        # account_details = pd.read_csv("test1.csv")
 
-        for login_details in account_details.values:
+        for login_details in account_details:
             sleep(1.0)
             browser = get_new_tab()
             browser.delete_all_cookies()
