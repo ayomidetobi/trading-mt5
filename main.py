@@ -168,7 +168,6 @@ def get_data(account_details):
     b_e_xpath = ""
     print("it is again")
     if account_details[3] == "MT4":
-        print("it is")
         try:
             browser.get(base_url)
             browser.implicitly_wait(15)
@@ -261,7 +260,7 @@ def get_data(account_details):
             browser.quit()
         except TimeoutException as e:
             print(
-                f"Authorization Failed for {account_details[0]} account number. Trying again.."
+                f"Authorization Failed for mt5 mt4 {account_details[0]} account number. Trying again.."
             )
             browser.close()
             pass
@@ -386,7 +385,7 @@ def get_data(account_details):
             browser.quit()
         except TimeoutException as e:
             print(
-                f"Authorization Failed for {account_details[0]} account number. Trying again.."
+                f"Authorization Failed for mt5 {account_details[0]} account number. Trying again.."
             )
             browser.close()
         except StaleElementReferenceException as e:
