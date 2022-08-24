@@ -406,4 +406,4 @@ if __name__ == "__main__":
             # account_details = pd.read_csv("test1.csv")
             print("Starting again..")
             # print(account_details[:4])
-            results = executor.map(get_data, account_details[:41])
+            results = executor.map(get_data, account_details)
