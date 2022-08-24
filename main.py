@@ -1,4 +1,5 @@
 import os
+import concurrent.futures
 import os.path
 from datetime import datetime
 from time import sleep
@@ -68,7 +69,6 @@ def get_all_accounts():
             print("No data found.")
             return
         else:
-            print(values[1:])
             return values[1:]
     except HttpError as err:
         print(err)
@@ -90,10 +90,11 @@ def get_new_tab():
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
     )
     opts.add_argument("--start-maximized")
-    opts.add_argument("--headless")
+    # opts.add_argument("--headless")
 
     # starting service for chrome web driver
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+    # service = Service(executable_path=ChromeDriverManager().install()) 
     # initiating chrome web driver
     web_browser = webdriver.Chrome(
         options=opts,
@@ -136,8 +137,9 @@ def get_market_date(server_name):
 
 
 # program starts from here
-if __name__ == "__main__":
 
+
+def get_data(account_details):
     base_url = "https://trade.mql5.com/trade"
     base_urlmt5 = "https://trade.mql5.com/trade?version=5"
 
@@ -147,230 +149,231 @@ if __name__ == "__main__":
     market_watch_xpath = (
         '//div[@class="page-window market-watch compact"]/div/div[@class="h"]'
     )
-    b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
     b_e_mt4_xpath = '//div[@class="page-table grid fixed odd trade-table toolbox-table"][2]//tr[@class="total"]/td[1]/div/span'
+    b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
+    # b_e_mt5_xpath = market_watch_xpath
     platform_mt4_css = 'input[type="radio"][id="mt4-platform"]'
     platform_mt5_css = 'input[type="radio"][id="mt5-platform"]'
     ok_button_xpath = '//button[text()="OK"]'
 
-    while True:
+    # for login_details in account_details:
+    sleep(1.0)
+    browser = get_new_tab()
+    browser.delete_all_cookies()
+    b_e_xpath = ""
+    if account_details[3] == "MT4":
+        print("it is")
+        try:
+            browser.get(base_url)
+            browser.implicitly_wait(15)
+            platform4 = WebDriverWait(browser, 30).until(
+                ec.element_to_be_clickable((By.CSS_SELECTOR, platform_mt4_css))
+            )
+            ActionChains(browser).move_to_element(platform4).click().perform()
+            b_e_xpath = b_e_mt4_xpath
+            print("MT4 clicked.")
+            sleep(0.5)
+            browser.implicitly_wait(20)
+            WebDriverWait(browser, 20).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, login_css))
+            ).send_keys(account_details[0])
+            browser.implicitly_wait(10)
+            WebDriverWait(browser, 30).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, pass_css))
+            ).send_keys(account_details[1])
+            browser.implicitly_wait(10)
+            server_input = WebDriverWait(browser, 30).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, server_css))
+            )
+            server_input.clear()
+            server_input.send_keys(account_details[2])
+            login_button = WebDriverWait(browser, 30).until(
+                ec.element_to_be_clickable((By.XPATH, ok_button_xpath))
+            )
+            ActionChains(browser).move_to_element(login_button).click().perform()
+            print("should be logged in.")
+            sleep(3.5)
+            browser.implicitly_wait(10)
+            balance_equ_ele = WebDriverWait(browser, 25).until(
+                ec.presence_of_element_located((By.XPATH, b_e_xpath))
+            )
+            sleep(0.5)
+            market_watch_time_ele = WebDriverWait(browser, 25).until(
+                ec.presence_of_element_located((By.XPATH, market_watch_xpath))
+            )
+
+            result_dict = dict()
+            if market_watch_time_ele is not None:
+                print(f"Login Account: {account_details[0]} logged in.")
+                sleep(1)
+                if balance_equ_ele is not None:
+                    balance_equity = balance_equ_ele.text.split(":")
+                    balance = (
+                        balance_equity[1]
+                        .replace("USD  Equity", "")
+                        .replace(" ", "")
+                        .strip()
+                    )
+                    equity = (
+                        balance_equity[2]
+                        .replace("Free margin", "")
+                        .replace("Margin", "")
+                        .replace(" ", "")
+                        .strip()
+                    )
+                    result_dict["date"] = (
+                        datetime.strptime(
+                            get_market_date(account_details[2]),
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                        .astimezone(pytz.timezone("Africa/Brazzaville"))
+                        .strftime("%Y-%m-%d %H:%M:%S")
+                    )
+                    result_dict["balance"] = balance
+                    result_dict["equity"] = equity
+                else:
+                    result_dict["date"] = (
+                        datetime.strptime(
+                            get_market_date(account_details[2]),
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                        .astimezone(pytz.timezone("Africa/Brazzaville"))
+                        .strftime("%Y-%m-%d %H:%M:%S")
+                    )
+                    result_dict["balance"] = 0
+                    result_dict["equity"] = 0
+                con = DbConnect()
+                new_insert_id = con.add_rows(str(account_details[0]), result_dict)
+                print(
+                    f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+                )
+                con.close_con()
+            else:
+                print("No records available.")
+            print(result_dict)
+            print("Logging out..")
+            browser.quit()
+        except TimeoutException as e:
+            print(
+                f"Authorization Failed for {account_details[0]} account number. Trying again.."
+            )
+            browser.quit()
+        except Exception as e:
+            # print(traceback.print_tb(e.__traceback__))
+            print("Exceptions raised.")
+            browser.quit()
+
+    if account_details[3] == "MT5":
+        try:
+            browser.get(base_urlmt5)
+            browser.implicitly_wait(15)
+            platform5 = WebDriverWait(browser, 30).until(
+                ec.element_to_be_clickable((By.CSS_SELECTOR, platform_mt5_css))
+            )
+            browser.execute_script("arguments[0].click();", platform5)
+            b_e_xpath = b_e_mt5_xpath
+            sleep(2.5)
+            print("MT5 clicked.")
+            accept_button = WebDriverWait(browser, 10).until(
+                ec.element_to_be_clickable((By.ID, "accept"))
+            )
+            ActionChains(browser).move_to_element(accept_button).click().perform()
+            print("should have clicked accept")
+            browser.implicitly_wait(20)
+            WebDriverWait(browser, 20).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, login_css))
+            ).send_keys(account_details[0])
+            browser.implicitly_wait(10)
+            WebDriverWait(browser, 30).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, pass_css))
+            ).send_keys(account_details[1])
+            browser.implicitly_wait(10)
+            server_input = WebDriverWait(browser, 30).until(
+                ec.presence_of_element_located((By.CSS_SELECTOR, server_css))
+            )
+            server_input.clear()
+            server_input.send_keys(account_details[2])
+            login_button = WebDriverWait(browser, 30).until(
+                ec.element_to_be_clickable((By.XPATH, ok_button_xpath))
+            )
+            ActionChains(browser).move_to_element(login_button).click().perform()
+            print("should have clicked login")
+            sleep(3.5)
+            browser.implicitly_wait(10)
+            balance_equ_ele = WebDriverWait(browser, 25).until(
+                ec.presence_of_element_located((By.XPATH, b_e_xpath))
+            )
+            sleep(1.5)
+            market_watch_time_ele = WebDriverWait(browser, 25).until(
+                ec.presence_of_element_located((By.XPATH, market_watch_xpath))
+            )
+
+            result_dict = dict()
+            if market_watch_time_ele is not None:
+                print(f"Login Account: {account_details[0]} logged in.")
+                sleep(1)
+                if balance_equ_ele is not None:
+                    balance_equity = balance_equ_ele.text.split(":")
+                    balance = (
+                        balance_equity[1]
+                        .replace("USD  Equity", "")
+                        .replace(" ", "")
+                        .strip()
+                    )
+                    equity = (
+                        balance_equity[2]
+                        .replace("Free margin", "")
+                        .replace("Margin", "")
+                        .replace(" ", "")
+                        .strip()
+                    )
+                    result_dict["date"] = (
+                        datetime.strptime(
+                            get_market_date(account_details[2]),
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                        .astimezone(pytz.timezone("Africa/Brazzaville"))
+                        .strftime("%Y-%m-%d %H:%M:%S")
+                    )
+                    result_dict["balance"] = balance
+                    result_dict["equity"] = equity
+                else:
+                    result_dict["date"] = (
+                        datetime.strptime(
+                            get_market_date(account_details[2]),
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                        .astimezone(pytz.timezone("Africa/Brazzaville"))
+                        .strftime("%Y-%m-%d %H:%M:%S")
+                    )
+                    result_dict["balance"] = 0
+                    result_dict["equity"] = 0
+                con = DbConnect()
+                new_insert_id = con.add_rows(str(account_details[0]), result_dict)
+                print(
+                    f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+                )
+                con.close_con()
+            else:
+                print("No records available.")
+            print(result_dict)
+            print("Logging out..")
+            browser.quit()
+        except TimeoutException as e:
+            print(
+                f"Authorization Failed for {account_details[0]} account number. Trying again.."
+            )
+            browser.close()
+        except Exception as e:
+            # print(traceback.print_tb(e.__traceback__))
+            print("Exceptions raised.", e)
+            browser.close()
+
+
+if __name__ == "__main__":
+    # while True:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         account_details = get_all_accounts()
-        # account_details = pd.read_csv("test1.csv")
-
-        for login_details in account_details:
-            sleep(1.0)
-            browser = get_new_tab()
-            browser.delete_all_cookies()
-            b_e_xpath = ""
-            if login_details[3] == "MT4":
-                try:
-                    browser.get(base_url)
-                    browser.implicitly_wait(15)
-                    platform4 = WebDriverWait(browser, 30).until(
-                        ec.element_to_be_clickable((By.CSS_SELECTOR, platform_mt4_css))
-                    )
-                    ActionChains(browser).move_to_element(platform4).click().perform()
-                    b_e_xpath = b_e_mt4_xpath
-                    print("MT4 clicked.")
-                    sleep(0.5)
-                    browser.implicitly_wait(20)
-                    WebDriverWait(browser, 20).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, login_css))
-                    ).send_keys(login_details[0])
-                    browser.implicitly_wait(10)
-                    WebDriverWait(browser, 30).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, pass_css))
-                    ).send_keys(login_details[1])
-                    browser.implicitly_wait(10)
-                    server_input = WebDriverWait(browser, 30).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, server_css))
-                    )
-                    server_input.clear()
-                    server_input.send_keys(login_details[2])
-                    login_button = WebDriverWait(browser, 30).until(
-                        ec.element_to_be_clickable((By.XPATH, ok_button_xpath))
-                    )
-                    ActionChains(browser).move_to_element(
-                        login_button
-                    ).click().perform()
-                    print("should be logged in.")
-                    sleep(3.5)
-                    browser.implicitly_wait(10)
-                    balance_equ_ele = WebDriverWait(browser, 25).until(
-                        ec.presence_of_element_located((By.XPATH, b_e_xpath))
-                    )
-                    sleep(0.5)
-                    market_watch_time_ele = WebDriverWait(browser, 25).until(
-                        ec.presence_of_element_located((By.XPATH, market_watch_xpath))
-                    )
-
-                    result_dict = dict()
-                    if market_watch_time_ele is not None:
-                        print(f"Login Account: {login_details[0]} logged in.")
-                        sleep(1)
-                        if balance_equ_ele is not None:
-                            balance_equity = balance_equ_ele.text.split(":")
-                            balance = (
-                                balance_equity[1]
-                                .replace("USD  Equity", "")
-                                .replace(" ", "")
-                                .strip()
-                            )
-                            equity = (
-                                balance_equity[2]
-                                .replace("Free margin", "")
-                                .replace("Margin", "")
-                                .replace(" ", "")
-                                .strip()
-                            )
-                            result_dict["date"] = (
-                                datetime.strptime(
-                                    get_market_date(login_details[2]),
-                                    "%Y-%m-%d %H:%M:%S",
-                                )
-                                .astimezone(pytz.timezone("Africa/Brazzaville"))
-                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                            result_dict["balance"] = balance
-                            result_dict["equity"] = equity
-                        else:
-                            result_dict["date"] = (
-                                datetime.strptime(
-                                    get_market_date(login_details[2]),
-                                    "%Y-%m-%d %H:%M:%S",
-                                )
-                                .astimezone(pytz.timezone("Africa/Brazzaville"))
-                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                            result_dict["balance"] = 0
-                            result_dict["equity"] = 0
-                        con = DbConnect()
-                        new_insert_id = con.add_rows(str(login_details[0]), result_dict)
-                        print(
-                            f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
-                        )
-                        con.close_con()
-                    else:
-                        print("No records available.")
-                    print(result_dict)
-                    print("Logging out..")
-                    browser.quit()
-                except TimeoutException as e:
-                    print(
-                        f"Authorization Failed for {login_details[0]} account number. Trying again.."
-                    )
-                    browser.quit()
-                except Exception as e:
-                    # print(traceback.print_tb(e.__traceback__))
-                    print("Exceptions raised.")
-                    browser.quit()
-
-            if login_details[3] == "MT5":
-                try:
-                    browser.get(base_urlmt5)
-                    browser.implicitly_wait(15)
-                    platform5 = WebDriverWait(browser, 30).until(
-                        ec.element_to_be_clickable((By.CSS_SELECTOR, platform_mt5_css))
-                    )
-                    browser.execute_script("arguments[0].click();", platform5)
-                    b_e_xpath = b_e_mt5_xpath
-                    sleep(2.5)
-                    print("MT5 clicked.")
-                    accept_button = WebDriverWait(browser, 10).until(
-                        ec.element_to_be_clickable((By.ID, "accept"))
-                    )
-                    ActionChains(browser).move_to_element(
-                        accept_button
-                    ).click().perform()
-                    print("should have clicked accept")
-                    browser.implicitly_wait(20)
-                    WebDriverWait(browser, 20).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, login_css))
-                    ).send_keys(login_details[0])
-                    browser.implicitly_wait(10)
-                    WebDriverWait(browser, 30).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, pass_css))
-                    ).send_keys(login_details[1])
-                    browser.implicitly_wait(10)
-                    server_input = WebDriverWait(browser, 30).until(
-                        ec.presence_of_element_located((By.CSS_SELECTOR, server_css))
-                    )
-                    server_input.clear()
-                    server_input.send_keys(login_details[2])
-                    login_button = WebDriverWait(browser, 30).until(
-                        ec.element_to_be_clickable((By.XPATH, ok_button_xpath))
-                    )
-                    ActionChains(browser).move_to_element(
-                        login_button
-                    ).click().perform()
-                    print("should have clicked login")
-                    sleep(3.5)
-                    browser.implicitly_wait(10)
-                    balance_equ_ele = WebDriverWait(browser, 25).until(
-                        ec.presence_of_element_located((By.XPATH, b_e_xpath))
-                    )
-                    sleep(0.5)
-                    market_watch_time_ele = WebDriverWait(browser, 25).until(
-                        ec.presence_of_element_located((By.XPATH, market_watch_xpath))
-                    )
-
-                    result_dict = dict()
-                    if market_watch_time_ele is not None:
-                        print(f"Login Account: {login_details[0]} logged in.")
-                        sleep(1)
-                        if balance_equ_ele is not None:
-                            balance_equity = balance_equ_ele.text.split(":")
-                            balance = (
-                                balance_equity[1]
-                                .replace("USD  Equity", "")
-                                .replace(" ", "")
-                                .strip()
-                            )
-                            equity = (
-                                balance_equity[2]
-                                .replace("Free margin", "")
-                                .replace("Margin", "")
-                                .replace(" ", "")
-                                .strip()
-                            )
-                            result_dict["date"] = (
-                                datetime.strptime(
-                                    get_market_date(login_details[2]),
-                                    "%Y-%m-%d %H:%M:%S",
-                                )
-                                .astimezone(pytz.timezone("Africa/Brazzaville"))
-                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                            result_dict["balance"] = balance
-                            result_dict["equity"] = equity
-                        else:
-                            result_dict["date"] = (
-                                datetime.strptime(
-                                    get_market_date(login_details[2]),
-                                    "%Y-%m-%d %H:%M:%S",
-                                )
-                                .astimezone(pytz.timezone("Africa/Brazzaville"))
-                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                            result_dict["balance"] = 0
-                            result_dict["equity"] = 0
-                        con = DbConnect()
-                        new_insert_id = con.add_rows(str(login_details[0]), result_dict)
-                        print(
-                            f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
-                        )
-                        con.close_con()
-                    else:
-                        print("No records available.")
-                    print(result_dict)
-                    print("Logging out..")
-                    browser.quit()
-                except TimeoutException as e:
-                    print(
-                        f"Authorization Failed for {login_details[0]} account number. Trying again.."
-                    )
-                    browser.quit()
-                except Exception as e:
-                    # print(traceback.print_tb(e.__traceback__))
-                    print("Exceptions raised.", e)
-                    browser.quit()
+        account_details = pd.read_csv("test1.csv")
+        # print(account_details.values[:3])
+        results = executor.map(get_data, account_details.values)
