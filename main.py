@@ -16,6 +16,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
@@ -90,7 +91,7 @@ def get_new_tab():
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
     )
     opts.add_argument("--start-maximized")
-    opts.add_argument("--headless")
+    # opts.add_argument("--headless")
 
     # starting service for chrome web driver
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
@@ -150,8 +151,11 @@ def get_data(account_details):
         '//div[@class="page-window market-watch compact"]/div/div[@class="h"]'
     )
     b_e_mt4_xpath = '//div[@class="page-table grid fixed odd trade-table toolbox-table"][2]//tr[@class="total"]/td[1]/div/span'
-    # b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
-    b_e_mt5_xpath = market_watch_xpath
+    b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
+    # /html/body/div[6]/div[3]/table/tbody/tr/td[1]/div/span
+    # /html/body/div[6]/div[3]/table/tbody/tr/td[1]/div/span/text()
+    # /html/body/div[6]/div[3]/table/tbody/tr/td[1]/div/span
+    # //td[@id="symbol"]
     platform_mt4_css = 'input[type="radio"][id="mt4-platform"]'
     platform_mt5_css = 'input[type="radio"][id="mt5-platform"]'
     ok_button_xpath = '//button[text()="OK"]'
@@ -247,7 +251,7 @@ def get_data(account_details):
                 con = DbConnect()
                 new_insert_id = con.add_rows(str(account_details[0]), result_dict)
                 print(
-                    f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+                    f"Record for {account_details[0]} inserted successfully. Inserted object id: {new_insert_id.inserted_id}"
                 )
                 con.close_con()
             else:
@@ -259,11 +263,13 @@ def get_data(account_details):
             print(
                 f"Authorization Failed for {account_details[0]} account number. Trying again.."
             )
-            browser.quit()
+            browser.close()
+            pass
         except Exception as e:
             # print(traceback.print_tb(e.__traceback__))
             print("Exceptions raised.")
-            browser.quit()
+            browser.close()
+            pass
 
     if account_details[3] == "MT5":
         try:
@@ -300,22 +306,39 @@ def get_data(account_details):
             )
             ActionChains(browser).move_to_element(login_button).click().perform()
             print("should have clicked login")
-            sleep(3.5)
-            browser.implicitly_wait(10)
-            balance_equ_ele = WebDriverWait(browser, 25).until(
-                ec.presence_of_element_located((By.XPATH, b_e_xpath))
+            sleep(9.5)
+            WebDriverWait(browser, 25).until(
+                ec.presence_of_element_located(
+                    (By.XPATH, "//tr[@id='total']/td[@id='symbol']/div/span")
+                )
+            )
+            balance_equ_ele = browser.find_element(
+                by=By.XPATH, value="//tr[@id='total']/td[@id='symbol']/div/span"
+            )
+            browser.implicitly_wait(30)
+            WebDriverWait(browser, 85).until(
+                ec.presence_of_element_located(
+                    (By.XPATH, "//tr[@id='total']/td[@id='symbol']/div/span")
+                )
             )
             sleep(1.5)
+            # omo = browser.find_element(
+            #     by=By.XPATH, value="//tr[@id='total']/td[@id='symbol']/div/span"
+            # )
             market_watch_time_ele = WebDriverWait(browser, 25).until(
                 ec.presence_of_element_located((By.XPATH, market_watch_xpath))
             )
-
+            # print(
+            #     market_watch_time_ele, "market watch time", market_watch_time_ele.text
+            # )
             result_dict = dict()
             if market_watch_time_ele is not None:
                 print(f"Login Account: {account_details[0]} logged in.")
-                sleep(1)
+                sleep(5)
                 if balance_equ_ele is not None:
+                    sleep(5)
                     balance_equity = balance_equ_ele.text.split(":")
+                    # print(list(balance_equity))
                     balance = (
                         balance_equity[1]
                         .replace("USD  Equity", "")
@@ -353,7 +376,7 @@ def get_data(account_details):
                 con = DbConnect()
                 new_insert_id = con.add_rows(str(account_details[0]), result_dict)
                 print(
-                    f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+                    f"Record for {account_details[0]} inserted successfully. Inserted object id: {new_insert_id.inserted_id}"
                 )
                 con.close_con()
             else:
@@ -366,17 +389,21 @@ def get_data(account_details):
                 f"Authorization Failed for {account_details[0]} account number. Trying again.."
             )
             browser.close()
+        except StaleElementReferenceException as e:
+            print(e)
+            browser.refresh()
         except Exception as e:
             # print(traceback.print_tb(e.__traceback__))
             print("Exceptions raised.", e)
-            browser.close()
+            pass
 
 
 if __name__ == "__main__":
-    # while True:
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        print("Starting..")
-        account_details = get_all_accounts()
-        print("Starting again..")
-        # print(account_details.values[:3])
-        results = executor.map(get_data, account_details)
+    while True:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            print("Starting..")
+            account_details = get_all_accounts()
+            # account_details = pd.read_csv("test1.csv")
+            print("Starting again..")
+            # print(account_details[:4])
+            results = executor.map(get_data, account_details)
