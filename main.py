@@ -375,5 +375,7 @@ if __name__ == "__main__":
     with concurrent.futures.ThreadPoolExecutor() as executor:
         print("Starting..")
         account_details = get_all_accounts()
+        print("Starting again..")
         # print(account_details.values[:3])
         results = executor.map(get_data, account_details)
+        
