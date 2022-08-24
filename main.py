@@ -90,7 +90,7 @@ def get_new_tab():
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
     )
     opts.add_argument("--start-maximized")
-    # opts.add_argument("--headless")
+    opts.add_argument("--headless")
 
     # starting service for chrome web driver
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
@@ -380,4 +380,3 @@ if __name__ == "__main__":
         print("Starting again..")
         # print(account_details.values[:3])
         results = executor.map(get_data, account_details)
-        
