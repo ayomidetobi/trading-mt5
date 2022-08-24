@@ -94,7 +94,7 @@ def get_new_tab():
 
     # starting service for chrome web driver
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
-    # service = Service(executable_path=ChromeDriverManager().install()) 
+    # service = Service(executable_path=ChromeDriverManager().install())
     # initiating chrome web driver
     web_browser = webdriver.Chrome(
         options=opts,
@@ -372,8 +372,7 @@ def get_data(account_details):
 
 if __name__ == "__main__":
     # while True:
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         account_details = get_all_accounts()
-        account_details = pd.read_csv("test1.csv")
         # print(account_details.values[:3])
-        results = executor.map(get_data, account_details.values)
+        results = executor.map(get_data, account_details)
