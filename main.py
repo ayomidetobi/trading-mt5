@@ -327,9 +327,12 @@ def get_data(account_details):
             market_watch_time_ele = WebDriverWait(browser, 25).until(
                 ec.presence_of_element_located((By.XPATH, market_watch_xpath))
             )
-            # print(
-            #     market_watch_time_ele, "market watch time", market_watch_time_ele.text
-            # )
+            print(
+                balance_equ_ele, "bal", balance_equ_ele.text
+            )
+            print(
+                market_watch_time_ele, "market watch time", market_watch_time_ele.text
+            )
             result_dict = dict()
             if market_watch_time_ele is not None:
                 print(f"Login Account: {account_details[0]} logged in.")
