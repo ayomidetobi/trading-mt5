@@ -150,8 +150,8 @@ def get_data(account_details):
         '//div[@class="page-window market-watch compact"]/div/div[@class="h"]'
     )
     b_e_mt4_xpath = '//div[@class="page-table grid fixed odd trade-table toolbox-table"][2]//tr[@class="total"]/td[1]/div/span'
-    b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
-    # b_e_mt5_xpath = market_watch_xpath
+    # b_e_mt5_xpath = '//tr[@id="total"]/td[@id="symbol"]/div/span'
+    b_e_mt5_xpath = market_watch_xpath
     platform_mt4_css = 'input[type="radio"][id="mt4-platform"]'
     platform_mt5_css = 'input[type="radio"][id="mt5-platform"]'
     ok_button_xpath = '//button[text()="OK"]'
@@ -374,7 +374,7 @@ def get_data(account_details):
 
 if __name__ == "__main__":
     # while True:
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         print("Starting..")
         account_details = get_all_accounts()
         print("Starting again..")
