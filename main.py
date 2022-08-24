@@ -406,11 +406,10 @@ if __name__ == "__main__":
         with concurrent.futures.ThreadPoolExecutor(max_workers=9) as executor:
             print("Starting..")
             account_details = get_all_accounts()
-            print(len(account_details))
             # account_details = pd.read_csv("test1.csv")
-            # print("Starting again..")
+            print("Starting again..")
             # # print(account_details[:4])
-            # results = executor.map(get_data, account_details)
+            results = executor.map(get_data, account_details)
 
         # threads = []
         # account_detailss = get_all_accounts()
