@@ -166,6 +166,7 @@ def get_data(account_details):
     print("it is")
     browser = get_new_tab()
     browser.delete_all_cookies()
+    browser.refresh()
     b_e_xpath = ""
     print("it is again")
     if account_details[3] == "MT4":
@@ -401,13 +402,13 @@ def get_data(account_details):
 
 if __name__ == "__main__":
     while True:
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     print("Starting..")
-    #     account_details = get_all_accounts()
-    #     # account_details = pd.read_csv("test1.csv")
-    #     print("Starting again..")
-    #     # print(account_details[:4])
-    #     results = executor.map(get_data, account_details)
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     print("Starting..")
+        #     account_details = get_all_accounts()
+        #     # account_details = pd.read_csv("test1.csv")
+        #     print("Starting again..")
+        #     # print(account_details[:4])
+        #     results = executor.map(get_data, account_details)
 
         threads = []
         account_detailss = get_all_accounts()
