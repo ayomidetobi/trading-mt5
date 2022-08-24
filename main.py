@@ -403,21 +403,21 @@ def get_data(account_details):
 
 if __name__ == "__main__":
     while True:
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     print("Starting..")
-        #     account_details = get_all_accounts()
-        #     # account_details = pd.read_csv("test1.csv")
-        #     print("Starting again..")
-        #     # print(account_details[:4])
-        #     results = executor.map(get_data, account_details)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            print("Starting..")
+            account_details = get_all_accounts()
+            # account_details = pd.read_csv("test1.csv")
+            print("Starting again..")
+            # print(account_details[:4])
+            results = executor.map(get_data, account_details[:45])
 
-        threads = []
-        account_detailss = get_all_accounts()
-        # tr = threading.Thread(target=get_data, args=(account_details[0],))
-        for account_details in account_detailss[:9]:
-            tr = threading.Thread(target=get_data, args=(account_details,))
-            print(account_details)
-            tr.start()
-            threads.append(tr)
-        for thread in threads:
-            thread.join()
+        # threads = []
+        # account_detailss = get_all_accounts()
+        # # tr = threading.Thread(target=get_data, args=(account_details[0],))
+        # for account_details in account_detailss[:9]:
+        #     tr = threading.Thread(target=get_data, args=(account_details,))
+        #     print(account_details)
+        #     tr.start()
+        #     threads.append(tr)
+        # for thread in threads:
+        #     thread.join()
