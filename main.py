@@ -327,9 +327,7 @@ def get_data(account_details):
             market_watch_time_ele = WebDriverWait(browser, 25).until(
                 ec.presence_of_element_located((By.XPATH, market_watch_xpath))
             )
-            print(
-                balance_equ_ele, "bal", balance_equ_ele.text
-            )
+            print(balance_equ_ele, "bal", balance_equ_ele.text)
             print(
                 market_watch_time_ele, "market watch time", market_watch_time_ele.text
             )
@@ -402,7 +400,7 @@ def get_data(account_details):
 
 if __name__ == "__main__":
     while True:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
             print("Starting..")
             account_details = get_all_accounts()
             # account_details = pd.read_csv("test1.csv")
