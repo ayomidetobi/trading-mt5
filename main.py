@@ -260,7 +260,7 @@ def get_data(account_details):
             browser.quit()
         except TimeoutException as e:
             print(
-                f"Authorization Failed for mt5 mt4 {account_details[0]} account number. Trying again.."
+                f"Authorization Failed for mt4 {account_details[0]} account number. Trying again.."
             )
             browser.close()
             pass
@@ -388,7 +388,7 @@ def get_data(account_details):
             print(
                 f"Authorization Failed for mt5 {account_details[0]} account number. Trying again.."
             )
-            browser.close()
+            browser.refresh()
         except StaleElementReferenceException as e:
             print(e)
             browser.refresh()
@@ -406,4 +406,4 @@ if __name__ == "__main__":
             # account_details = pd.read_csv("test1.csv")
             print("Starting again..")
             # print(account_details[:4])
-            results = executor.map(get_data, account_details)
+            results = executor.map(get_data, account_details[:41])
