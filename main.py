@@ -412,7 +412,7 @@ if __name__ == "__main__":
         threads = []
         account_detailss = get_all_accounts()
         # tr = threading.Thread(target=get_data, args=(account_details[0],))
-        for account_details in account_detailss[:87]:
+        for account_details in account_detailss[:9]:
             tr = threading.Thread(target=get_data, args=(account_details,))
             print(account_details)
             tr.start()
