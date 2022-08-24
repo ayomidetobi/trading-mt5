@@ -94,7 +94,7 @@ def get_new_tab():
 
     # starting service for chrome web driver
     service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
-    # service = Service(executable_path=ChromeDriverManager().install())
+    service = Service(executable_path=ChromeDriverManager().install())
     # initiating chrome web driver
     web_browser = webdriver.Chrome(
         options=opts,
