@@ -158,9 +158,11 @@ def get_data(account_details):
 
     # for login_details in account_details:
     sleep(1.0)
+    print("it is")
     browser = get_new_tab()
     browser.delete_all_cookies()
     b_e_xpath = ""
+    print("it is again")
     if account_details[3] == "MT4":
         print("it is")
         try:
