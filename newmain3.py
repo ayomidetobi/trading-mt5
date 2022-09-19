@@ -161,6 +161,7 @@ if __name__ == "__main__":
     # body > div.page-block.frame.bottom > div:nth-child(3) > table > tbody > tr.total > td.iconed > div > span
     # while True:
     account_details = get_all_accounts()
+
     def mt4():
         browser.get(base_url)
         browser.implicitly_wait(15)
@@ -257,8 +258,10 @@ if __name__ == "__main__":
                 result_dict["equity"] = 0
             print(result_dict)
             con = DbConnect()
-            # new_insert_id = con.add_rows(str(login_details[0]), result_dict)
-            print(f"Record inserter successfully. Inserted object id: ")
+            new_insert_id = con.add_rows(str(login_details[0]), result_dict)
+            print(
+                f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+            )
             con.close_con()
         else:
             print("No records available.")
@@ -307,8 +310,10 @@ if __name__ == "__main__":
                 result_dict["balance"] = 0
                 result_dict["equity"] = 0
             con = DbConnect()
-            # new_insert_id = con.add_rows(str(login_details[0]), result_dict)
-            print(f"Record inserter successfully. Inserted object id: ")
+            new_insert_id = con.add_rows(str(login_details[0]), result_dict)
+            print(
+                f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id}"
+            )
             con.close_con()
 
         else:
@@ -426,8 +431,10 @@ if __name__ == "__main__":
                 result_dict["balance"] = 0
                 result_dict["equity"] = 0
             con = DbConnect()
-            # new_insert_id = con.add_rows(str(login_details[0]), result_dict)
-            print(f"Record inserter successfully. Inserted object id: ")
+            new_insert_id = con.add_rows(str(login_details[0]), result_dict)
+            print(
+                f"Record inserter successfully. Inserted object id: {new_insert_id.inserted_id} "
+            )
             con.close_con()
             browser.quit()
         else:
