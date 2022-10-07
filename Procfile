@@ -4,4 +4,9 @@ worker3: python newmain3.py
 worker4: python newmain4.py
 worker5: python newmain5.py
 worker6: python newmain6.py
-worker7: python runtest.py
+worker7: python newmain7.py
+worker8: python newmain8.py
+worker9: python newmain9.py
+worker10: python newmain10.py
+worker11: python newmain11.py
+workertest: python runtest.py
