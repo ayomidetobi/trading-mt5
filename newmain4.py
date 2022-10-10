@@ -445,7 +445,9 @@ if __name__ == "__main__":
 
     # account_details = pd.read_csv("test1.csv")
     while True:
-        for login_details in account_details[300:450]:
+        amt = len(account_details)
+        perdyno = amt // 10
+        for login_details in account_details[perdyno*2:perdyno*3]:
             sleep(1.0)
             browser = get_new_tab()
             browser.delete_all_cookies()
