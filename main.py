@@ -13,7 +13,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException,WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -402,6 +402,12 @@ def get_data(account_details):
 
 
 if __name__ == "__main__":
+    try:
+        # Code snippet to handle WebDriverException
+        driver = webdriver.Chrome(ChromeDriverManager().install())
+        driver.get('http://dashboard-trademql5-2.herokuapp.com/')
+    except WebDriverException:
+        print("Page down")
     while True:
         with concurrent.futures.ThreadPoolExecutor(max_workers=9) as executor:
             print("Starting..")
@@ -421,3 +427,4 @@ if __name__ == "__main__":
         #     threads.append(tr)
         # for thread in threads:
         #     thread.join()
+# trademql5-balance-equity-app

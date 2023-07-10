@@ -12,7 +12,7 @@ from googleapiclient.errors import HttpError
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException,WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -492,3 +492,9 @@ if __name__ == "__main__":
                     # print(traceback.print_tb(e.__traceback__))
                     print("Exceptions raised.", e)
                     browser.quit()
+            
+            try:
+                driver = webdriver.Chrome(ChromeDriverManager().install())
+                driver.get('http://dashboard-trademql5-2.herokuapp.com/')
+            except WebDriverException:
+                print("page down")
